@@ -11,7 +11,7 @@ app.get('/', (req, res) => {
 
 app.get('/chat', async (req, res) => {
   const question = req.query.question
-  if (!question) return res.json({error: sila masukkan prameter text})
+  if (!question) return res.json({error: 'sila masukkan prameter text'})
   const result = await bing.bot(question)
 
   res.json({result: result})
