@@ -2,14 +2,9 @@ const puppeteer = require('puppeteer-core');
 
 async function bot(question) {
   try {
-    const browser = await puppeteer.launch({
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--single-process',
-      ],
-      executablePath: await puppeteer.executablePath(),
+   const browser = await puppeteer.launch({
+      executablePath: process.env.CHROME_BIN || '/app/.apt/usr/bin/google-chrome', // Sesuaikan path jika diperlukan
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     const page = await browser.newPage();
