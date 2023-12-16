@@ -1,52 +1,56 @@
-const puppeteer = require('puppeteer')
-
-function delay(time) {
-  return new Promise(function(resolve) { 
-    setTimeout(resolve, time)
-  });
-}
+const puppeteer = require('puppeteer-core');
 
 async function bot(question) {
-  // Launch the browser and open a new blank page
-  const browser = await puppeteer.launch({headless: false});
-  const page = await browser.newPage();
+  try {
+    const browser = await puppeteer.launch({
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--single-process',
+      ],
+      executablePath: await puppeteer.executablePath(),
+    });
 
-  await page.goto('https://www.bing.com/account/general', {
-    waitUntil: "domcontentloaded"
-  });
+    const page = await browser.newPage();
 
-  await page.click("#adlt_set_off");
+    await page.goto('https://www.bing.com/account/general', {
+      waitUntil: 'domcontentloaded',
+    });
 
-  await page.click("#sv_btn");
+    await page.click('#adlt_set_off');
+    await page.click('#sv_btn');
+    await page.click('#adlt_confirm');
 
-  await page.click("#adlt_confirm");
+    await page.waitForSelector('#codex > a', { visible: true });
+    await page.click('#codex > a');
 
-  await page.waitForSelector("#codex > a", {visible: true});
+    // NOTE: Perlu penyesuaian di sini untuk menampilkan formulir pertanyaan input
+    await page.waitForTimeout(5000);
 
-  await page.click("#codex > a");
+    await page.type('>>> #searchbox', question);
+    await page.keyboard.press('Enter', { delay: 160 });
 
-  // NOTE: need adjustment here to show the input question form
-  await delay(5000)
+    await page.waitForSelector('>>> cib-message-group.response-message-group', { timeout: 60000 });
 
-  await page.type('>>> #searchbox', question);
-  await page.keyboard.press('Enter', {delay: 160});
+    const sharedElement = await page.waitForSelector('>>> cib-shared > div > div > div', { timeout: 0 });
+    const value = await sharedElement.evaluate(el => el.textContent);
+    console.log(value);
 
-  await page.waitForSelector(">>> cib-message-group.response-message-group", {timeout: 60000});
+    await page.screenshot({
+      path: 'bing-cib-message.png',
+      fullPage: true,
+    });
 
-  const shared_element = await page.waitForSelector(">>> cib-shared > div > div > div", {timeout: 0});
-  const value = await shared_element.evaluate(el => el.textContent);
-  console.log(value);
+    await browser.close();
 
-  await page.screenshot({
-    path: 'bing-cib-message.png',
-    fullPage: true,
-  });
-  
-  await browser.close();
-
-  return value;
+    return value;
+  } catch (error) {
+    console.error(error);
+    return 'Gagal menjalankan bot Bing.';
+  }
 }
 
 module.exports = {
-  bot
-}
+  bot,
+};
